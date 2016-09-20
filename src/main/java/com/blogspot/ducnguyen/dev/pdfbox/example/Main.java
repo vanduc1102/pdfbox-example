@@ -14,49 +14,50 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
  * @author nvduc
  */
 public class Main {
-    
-    private final static String PDF_SAMPLE = getCurrentPath().concat(File.separator).concat("src").concat(File.separator).concat("resources").concat(File.separator).concat("pdf.pdf");
-    
+
+    private static String PDF_000 = "000.pdf";
+    private static String PDF_090 = "090.pdf";
+    private static String PDF_180 = "0180.pdf";
+    private static String PDF_270 = "0270.pdf";
+    private static String PDF_SIGN = "sign.jpg";
+
     public static void main(String[] args) throws IOException {
-        System.out.println(PDF_SAMPLE);
-        String imagePath = getCurrentPath().concat(File.separator).concat("src").concat(File.separator).concat("resources").concat(File.separator).concat("chelsea.jpg");
-        addImageToPdf(PDF_SAMPLE, imagePath, createOutput("jpg"));
-        String imagePngPath = getCurrentPath().concat(File.separator).concat("src").concat(File.separator).concat("resources").concat(File.separator).concat("chelsea.png");
-        addImageToPdf(PDF_SAMPLE, imagePngPath, createOutput("png"));
+        File inputPDF = Paths.get("src", "resources", PDF_000).toFile();
+        File signImage = Paths.get("src", "resources", PDF_SIGN).toFile();
+        File outputPDF = Paths.get("target", "output" + PDF_000).toFile();
+        addImageToPdf(inputPDF, signImage, outputPDF);
+        System.out.println("com.blogspot.ducnguyen.dev.pdfbox.example.Main.main() -- DONE");
     }
-    
-    public static String getCurrentPath() {
-        return Paths.get(".").toAbsolutePath().normalize().toString();
-    }
-    
-    public static String createOutput(String prefix) {        
-        return Paths.get(".").toAbsolutePath().normalize().toString().concat(File.separator).concat("target").concat(File.separator).concat(prefix+String.valueOf(System.currentTimeMillis())).concat(".pdf");
-    }
-    
-    public static void addImageToPdf( String inputFile, String imagePath, String outputFile )
-            throws IOException
-    {
-        try
-        ( // the document
-                PDDocument doc = PDDocument.load( new File(inputFile) )) {
+
+    public static void addImageToPdf(File inputFile, File signImage, File outputFile)
+            throws IOException {
+        try ( // the document
+                PDDocument doc = PDDocument.load(inputFile)) {
 
             //we will add the image to the first page.
             PDPage page = doc.getPage(0);
+            float x = 10;
+            float y = 10;
+            float pageWidth = page.getMediaBox().getWidth();
+            float pageHeight = page.getMediaBox().getHeight();
 
             // createFromFile is the easiest way with an image file
             // if you already have the image in a BufferedImage, 
             // call LosslessFactory.createFromImage() instead
-            PDImageXObject pdImage = PDImageXObject.createFromFile(imagePath, doc);
+            PDImageXObject pdImage = PDImageXObject.createFromFileByContent(signImage, doc);
             PDPageContentStream contentStream = new PDPageContentStream(doc, page, AppendMode.APPEND, true);
 
             // contentStream.drawImage(ximage, 20, 20 );
             // better method inspired by http://stackoverflow.com/a/22318681/535646
             // reduce this value if the image is too large
             float scale = 1f;
-            contentStream.drawImage(pdImage, 20, 20, pdImage.getWidth()*scale, pdImage.getHeight()*scale);
-
+            float imageWidth = pdImage.getWidth() * scale;
+            float imageHeight = pdImage.getHeight() * scale;
+            float correctX = x;
+            float correctY = pageHeight - y - imageHeight;
+            contentStream.drawImage(pdImage, correctX, correctY, imageWidth, imageHeight);
             contentStream.close();
-            doc.save( outputFile );
+            doc.save(outputFile);
         }
     }
 }
